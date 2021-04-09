@@ -1,6 +1,6 @@
 package pt.unl.fct.di.apdc.avaliacaoAPDC.resources;
 
-import java.util.logging.Logger;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -12,12 +12,9 @@ import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
-import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.PathElement;
 import com.google.cloud.datastore.Transaction;
-import com.google.gson.Gson;
 
-import pt.unl.fct.di.apdc.avaliacaoAPDC.util.LoginData;
 import pt.unl.fct.di.apdc.avaliacaoAPDC.util.StateData;
 
 
@@ -26,10 +23,8 @@ import pt.unl.fct.di.apdc.avaliacaoAPDC.util.StateData;
 public class DeleteResource {
 	
 	
-	private static final Logger LOG = Logger.getLogger(LoginResource.class.getName());
+	
 	private	final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();	
-	private final Gson g = new Gson();
-	private	final KeyFactory userKeyFactory = datastore.newKeyFactory().setKind("User");
 	
 	
 	@POST
@@ -57,29 +52,29 @@ public class DeleteResource {
 				txn.rollback();
 				return Response.status(Status.BAD_REQUEST).entity("User non existant").build();
 			}
-			else if((data.username.equals(data.username2) && user.getString("role").equals("USER") )
-					|| user2.getString("role").equals("USER") 
-					&& (user.getString("role").equals("GBO") ||user.getString("role").equals("GA") )){
+			else if((data.username.equals(data.username2) && user.getString("role").equals(Roles.USER.toString()) )
+					|| user2.getString("role").equals(Roles.USER.toString()) 
+					&& (user.getString("role").equals(Roles.GBO.toString()) ||user.getString("role").equals(Roles.GA.toString()) )){
 				
+				Key attr = datastore.newKeyFactory()
+						.addAncestor(PathElement.of("User", data.username2))
+						.setKind("UserAttrs").newKey(data.username2);
 				Key tokenKey2 = datastore.newKeyFactory()
 						.addAncestor(PathElement.of("User", data.username2))
 						.setKind("Token").newKey(data.username2);
 				Entity token2 = txn.get(tokenKey2);
-				if(user.getString("role").equals("GA") && token2 !=null) {
+				if(user.getString("role").equals(Roles.GA.toString()) && token2 !=null) {
 					txn.delete(tokenKey2);
 				}
-				txn.delete(userKey);
+				txn.delete(userKey2);
+				txn.delete(attr);
 				txn.commit();
-				return Response.ok("{}").build();
+				return Response.ok("User deleted").build();
 			}
 			else {
 				txn.rollback();
 				return Response.status(Status.BAD_REQUEST).entity("User has no premission to remove this account").build();
 			}
-		}catch(Exception e){
-			txn.rollback();
-			LOG.severe(e.getMessage());
-			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}finally {
 			if(txn.isActive()) {
 				txn.rollback();

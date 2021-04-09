@@ -3,6 +3,9 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
 	version="3.1">
+	<listener>
+        <listener-class>pt.unl.fct.di.apdc.avaliacaoAPDC.bootstrap.ServerStart</listener-class>
+    </listener>
 	<display-name>Avaliacao APDC</display-name>
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
@@ -53,5 +56,4 @@
 		<servlet-name>jerseyServlet</servlet-name>
 		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping>
-
 </web-app>

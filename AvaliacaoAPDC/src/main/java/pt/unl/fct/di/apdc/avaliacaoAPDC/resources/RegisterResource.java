@@ -1,6 +1,5 @@
 package pt.unl.fct.di.apdc.avaliacaoAPDC.resources;
 
-import java.util.logging.Logger;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -21,14 +20,13 @@ import com.google.cloud.datastore.PathElement;
 import com.google.cloud.datastore.Transaction;
 import com.google.cloud.datastore.Entity.Builder;
 
-import pt.unl.fct.di.apdc.avaliacaoAPDC.util.RegisterData;
+import pt.unl.fct.di.apdc.avaliacaoAPDC.util.UserData;
 
 @Path("/register")
 @Produces(MediaType.APPLICATION_JSON + ";charset=utf8")
 public class RegisterResource {
 	
 	
-	private static final Logger LOG = Logger.getLogger(LoginResource.class.getName());
 	private	final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();	
 	
 	public RegisterResource(){
@@ -38,9 +36,7 @@ public class RegisterResource {
 	@POST
 	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
-	public Response register(RegisterData data) {
-		LOG.fine("Register attempt by user: " + data.username);
-		
+	public Response register(UserData data) {
 		if(!data.validRegistration()) {
 			return Response.status(Status.BAD_REQUEST).entity("Wrong parameter(s)").build();
 		}
@@ -62,18 +58,38 @@ public class RegisterResource {
 						.set("password", DigestUtils.sha512Hex(data.password))
 						.set("email", data.email)
 						.set("user_creation_time", Timestamp.now())
-						.set("role", "USER")
+						.set("role", Roles.USER.toString())
 						.set("state", true)
-						.build();
-				Entity attr = Entity.newBuilder(attrKey)
-							.set("profile","","")
-							.set("phone","")
-							.set("mobile", "")
-							.set("adress","")
-							.set("adress2","")
-							.set("location","")
-							.set("zipcode","")
-							.build();
+						.build();				
+				Builder build2 = Entity.newBuilder(attrKey);
+				if(data.profile!=null || data.visibility!=null) {
+					if(data.visibility.matches("^PUBLIC|PRIVATE$") && data.profile!=null)
+						build2.set("profile",data.profile,data.visibility.toUpperCase());
+					else
+						return Response.status(Status.BAD_REQUEST).entity("Occured an error while changing the profile").build();
+				}
+				if(data.phone!=null )
+					if(data.phone())
+						build2.set("phone",data.phone);
+					else
+						return Response.status(Status.BAD_REQUEST).entity("Occured an error while changing the phone number").build();
+				if(data.mobile!=null)
+					if(data.mobile())
+						build2.set("mobile",data.mobile);
+					else
+						return Response.status(Status.BAD_REQUEST).entity("Occured an error while changing the mobile phone number").build();
+				if(data.adress!=null)
+					build2.set("adress",data.adress);
+				if(data.adress2!=null)
+					build2.set("adress2",data.adress2);					
+				if(data.location!=null)
+					build2.set("location",data.location);
+				if(data.zipcode!=null)
+					if(data.zipcode())
+						build2.set("zipcode",data.zipcode);
+					else
+						return Response.status(Status.BAD_REQUEST).entity("Occured an error while changing the zipcode").build();				
+				Entity attr = build2.build();
 				txn.add(user,attr);
 				txn.commit();
 				return Response.ok("User succesfully registered!").build();

@@ -7,4 +7,7 @@ public class RoleQuery {
 		
 	}
 	
+	public boolean checkRole() {
+		return this.role.matches("^SU|GA|GBO|USER$");
+	}
 }

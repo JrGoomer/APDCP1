@@ -17,7 +17,6 @@ import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
 import com.google.cloud.datastore.Entity;
 import com.google.cloud.datastore.Key;
-import com.google.cloud.datastore.KeyFactory;
 import com.google.cloud.datastore.PathElement;
 import com.google.cloud.datastore.Transaction;
 import com.google.gson.Gson;
@@ -31,12 +30,9 @@ import pt.unl.fct.di.apdc.avaliacaoAPDC.util.LoginData;
 public class LoginResource {
 	private static final Logger LOG = Logger.getLogger(LoginResource.class.getName());
 	private	final Datastore datastore = DatastoreOptions.getDefaultInstance().getService();	
-	private final Gson g = new Gson();
-	private	final KeyFactory userKeyFactory = datastore.newKeyFactory().setKind("User");	
+	private final Gson g = new Gson();	
 	public LoginResource() {}
 
-	
-	
 	@POST
 	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -50,7 +46,7 @@ public class LoginResource {
 		Key userKey = datastore.newKeyFactory().setKind("User").newKey(data.username);
 		Entity user = txn.get(userKey);
 		try {	
-			if(user !=null) {
+			if(user !=null && user.getBoolean("state")) {
 				String hashedPWD = user.getString("password");
 				if(hashedPWD.equals(DigestUtils.sha512Hex(data.password))){
 					String tokenId =UUID.randomUUID().toString();
@@ -67,7 +63,7 @@ public class LoginResource {
 					return Response.ok(g.toJson(token2)).build();
 				}
 				else {
-					LOG.warning("Wrong password for username: " + data.username);
+					txn.rollback();
 					return Response.status(Status.FORBIDDEN).build();
 				}
 			}
