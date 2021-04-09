@@ -35,6 +35,8 @@ public class LoginResource {
 	private	final KeyFactory userKeyFactory = datastore.newKeyFactory().setKind("User");	
 	public LoginResource() {}
 
+	
+	
 	@POST
 	@Path("/")
 	@Consumes(MediaType.APPLICATION_JSON)
