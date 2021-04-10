@@ -4,7 +4,7 @@ import java.util.UUID;
 
 
 public class AuthToken {
-	public static final long EXPIRATION_TIME = 1000*60*60*2; //2h
+	public static final long EXPIRATION_TIME = 1000*60*20;//60*2; //2h
 	public String username;
 	public String role;
 	public String tokenID;
